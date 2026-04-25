@@ -10,25 +10,20 @@
 #define NUM 6
 
 / {
-    /* --- 【追加】スクロール用プロセッサの定義 --- */
-    zip_xy_to_scroll_3: zip_xy_to_scroll_3 {
+    /* スクロール変換用のプロセッサ定義（シンプルに定義のみ） */
+    zip_xy_to_scroll_mapper: zip_xy_to_scroll_mapper {
         compatible = "zmk,input-processor-xy-to-scroll-mapper";
         #input-processor-cells = <0>;
-        /* レイヤー3がアクティブな時だけ有効にする */
-        track-remain-layers = <3>; 
     };
 
-    /* スクロール量を調整するスケーラー（1/2の速度にする設定） */
     zip_scroll_scaler: zip_scroll_scaler {
         compatible = "zmk,input-processor-scaler";
         #input-processor-cells = <2>;
         type = "scroll";
     };
-    /* ------------------------------------------- */
 
     combos {
         compatible = "zmk,combos";
-
         bt_clear {
             bindings = <&bt BT_CLR>;
             key-positions = <28 29>;
@@ -81,13 +76,18 @@
     };
 };
 
-/* --- 【追加】トラックボールの動作にプロセッサを適用 --- */
+/* --- 修正のメイン部分 --- */
+
+/* 通常時（レイヤー3以外）の設定 */
 &pointing_listener {
+    input-processors = <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
+};
+
+/* レイヤー3がアクティブな時だけ、このリスナー設定が上書き適用される */
+&pointing_listener {
+    layers = <3>;
     input-processors = 
-        /* 1. XY軸の反転（既存設定がある場合） */
         <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>,
-        /* 2. レイヤー3の時だけスクロールに変換 */
-        <&zip_xy_to_scroll_3>,
-        /* 3. スクロール速度を半分（1/2）に調整 */
+        <&zip_xy_to_scroll_mapper>,
         <&zip_scroll_scaler 1 2>;
 };
