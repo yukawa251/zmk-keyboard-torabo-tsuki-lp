@@ -10,7 +10,7 @@
 #define NUM 6
 
 / {
-    /* スクロール変換用のプロセッサ定義（シンプルに定義のみ） */
+    /* --- 入力プロセッサの定義 --- */
     zip_xy_to_scroll_mapper: zip_xy_to_scroll_mapper {
         compatible = "zmk,input-processor-xy-to-scroll-mapper";
         #input-processor-cells = <0>;
@@ -20,6 +20,18 @@
         compatible = "zmk,input-processor-scaler";
         #input-processor-cells = <2>;
         type = "scroll";
+    };
+
+    /* レイヤー3の時だけスクロールを有効にするリスナー定義 */
+    /* ノード名を一意にするため名称を変更 */
+    scroll_listener: scroll_listener {
+        compatible = "zmk,input-behavior-listener";
+        device = <&vtrack>; // トラックボールのデバイス名に合わせる
+        layers = <3>;
+        input-processors = 
+            <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>,
+            <&zip_xy_to_scroll_mapper>,
+            <&zip_scroll_scaler 1 2>;
     };
 
     combos {
@@ -76,18 +88,7 @@
     };
 };
 
-/* --- 修正のメイン部分 --- */
-
-/* 通常時（レイヤー3以外）の設定 */
+/* 通常の挙動（レイヤー3以外のデフォルト） */
 &pointing_listener {
     input-processors = <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
-};
-
-/* レイヤー3がアクティブな時だけ、このリスナー設定が上書き適用される */
-&pointing_listener {
-    layers = <3>;
-    input-processors = 
-        <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>,
-        <&zip_xy_to_scroll_mapper>,
-        <&zip_scroll_scaler 1 2>;
 };
